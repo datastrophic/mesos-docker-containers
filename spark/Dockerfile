@@ -1,9 +1,10 @@
-FROM mesosphere/mesos:0.27.1-2.0.226.ubuntu1404
+FROM datastrophic/mesos:0.27.1
 
-ENV MESOS_WORK_DIR /tmp/mesos
-ENV MESOS_LOG_DIR /var/log/mesos
-ENV MESOS_NATIVE_JAVA_LIBRARY /usr/local/lib/libmesos.so
+RUN apt-get update && apt-get install -y curl && \
+    mkdir -p /opt/spark /opt/spark-executor && \
+    curl -o /opt/spark-executor/spark-1.6.0-bin-hadoop2.6.tgz http://apache.mirrors.spacedump.net/spark/spark-1.6.0/spark-1.6.0-bin-hadoop2.6.tgz && \
+    tar -xzf /opt/spark-executor/spark-1.6.0-bin-hadoop2.6.tgz -C /opt/spark --strip 1
 
-VOLUME /tmp/mesos
+ENV SPARK_EXECUTOR_URI=file:///opt/spark-executor/spark-1.6.0-bin-hadoop2.6.tgz
 
-VOLUME /var/log/mesos
+ENV SPARK_HOME /opt/spark
