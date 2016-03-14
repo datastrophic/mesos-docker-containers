@@ -69,7 +69,7 @@ appropriate port remapping to avoid conflicts. Example:
 To use Spark-enabled images, minor changes are needed to `mesos-slave` in docker-compose:
 
       mesos-slave:
-        image: datastrophic/mesos-slave-spark:0.27.1-1.6
+        image: datastrophic/mesos-slave-spark:mesos-0.27.1-spark-1.6
         hostname: "mesos-slave"
         privileged: true
         environment:
@@ -88,6 +88,34 @@ To use Spark-enabled images, minor changes are needed to `mesos-slave` in docker
           - /sys/fs/cgroup:/sys/fs/cgroup
           - /var/run/docker.sock:/var/run/docker.sock
           
+###Running Chronos via Marathon in local environment
+Instead of running Chronos as a separate Docker process it could be launched and managed with Marathon which will allow 
+to scale instance number and manage configuration with ease. To launch Chronos Marathon's REST API should be used. Because of 
+local environment specifics hostname resolution suffers when running docker-in-docker, so ip address in `CHRONOS_MASTER` 
+and `CHRONOS_ZK_HOSTS` should point to `docker-machine ip mesos`.
+       
+       curl -XPOST 'http://marathon:8080/v2/apps' -H 'Content-Type: application/json' -d '{
+         "id": "chronos",
+         "container": {
+           "type": "DOCKER",
+           "docker": {
+             "network": "BRIDGE",
+               "image": "datastrophic/chronos:mesos-0.27.1-chronos-2.5",
+               "parameters": [
+                    { "key": "env", "value": "CHRONOS_HTTP_PORT=4400" },
+                    { "key": "env", "value": "CHRONOS_MASTER=zk://'"$(docker-machine ip mesos)"':2181/mesos" },
+                    { "key": "env", "value": "CHRONOS_ZK_HOSTS='"$(docker-machine ip mesos)"':2181"}
+               ],
+               "portMappings": [
+                 { "containerPort": 4400 }
+               ]
+           }
+         },
+         "cpus": 1,
+         "mem": 512,
+         "instances": 1
+       }'
+
 ## Where to go from here
 
 * [TBD] Mesos Workshop usage examples and sample framework implementation
