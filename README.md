@@ -69,7 +69,7 @@ appropriate port remapping to avoid conflicts. Example:
 To use Spark-enabled images, minor changes are needed to `mesos-slave` in docker-compose:
 
       mesos-slave:
-        image: datastrophic/mesos-spark:0.27.1-1.6
+        image: datastrophic/mesos-slave-spark:0.27.1-1.6
         hostname: "mesos-slave"
         privileged: true
         environment:
