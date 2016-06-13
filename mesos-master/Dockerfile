@@ -1,4 +1,4 @@
-FROM datastrophic/mesos:0.27.1
+FROM datastrophic/mesos:0.28.1
 
 CMD ["--registry=in_memory"]
 

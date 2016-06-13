@@ -1,4 +1,4 @@
-FROM mesosphere/mesos:0.27.1-2.0.226.ubuntu1404
+FROM mesosphere/mesos:0.28.1-2.0.20.ubuntu1404
 
 ENV MESOS_WORK_DIR /tmp/mesos
 ENV MESOS_LOG_DIR /var/log/mesos

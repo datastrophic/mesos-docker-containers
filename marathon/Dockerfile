@@ -1,1 +1,1 @@
-FROM mesosphere/marathon:v0.15.3
+FROM mesosphere/marathon:v0.15.5
