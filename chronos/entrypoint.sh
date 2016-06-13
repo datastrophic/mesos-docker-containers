@@ -2,6 +2,7 @@
 
 CMD="chronos run_jar"
 
+
 # Parse environment variables (borrowed from https://github.com/mesoscloud/chronos)
 for k in `set | grep ^CHRONOS_ | cut -d= -f1`; do
     eval v=\$$k
