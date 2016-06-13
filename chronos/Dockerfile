@@ -1,4 +1,8 @@
-FROM mesosphere/chronos:chronos-2.5.0-0.1.20160223054243.ubuntu1404-mesos-0.27.1-2.0.226.ubuntu1404
+FROM datastrophic/mesos:0.28.1
+
+ENV CHRONOS_VERSION=2.4.0-0.1.20151007110204.ubuntu1404
+
+RUN apt-get install --no-install-recommends -y chronos=$CHRONOS_VERSION
 
 COPY entrypoint.sh /
 

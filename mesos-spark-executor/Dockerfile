@@ -1,4 +1,4 @@
-FROM datastrophic/mesos:0.27.1
+FROM datastrophic/mesos:0.28.1
 
 RUN apt-get update && apt-get install -y curl && \
     mkdir -p /opt/spark /opt/spark-executor && \

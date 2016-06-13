@@ -1,4 +1,4 @@
-FROM datastrophic/mesos:0.27.1
+FROM datastrophic/mesos:0.28.1
 
 #installing utils and OpenJDK
 RUN apt-get update && apt-get install -y curl apt-transport-https ca-certificates lxc iptables apparmor openjdk-7-jre-headless
