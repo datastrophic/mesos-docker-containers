@@ -1,4 +1,4 @@
-FROM datastrophic/mesos-slave:0.27.1
+FROM datastrophic/mesos-slave:0.28.1
 
 RUN mkdir -p /opt/spark /opt/spark-executor && \
     curl -o /opt/spark-executor/spark-1.6.0-bin-hadoop2.6.tgz http://apache.mirrors.spacedump.net/spark/spark-1.6.0/spark-1.6.0-bin-hadoop2.6.tgz && \
