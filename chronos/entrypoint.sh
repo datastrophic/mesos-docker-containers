@@ -1,8 +1,7 @@
 #!/bin/bash
 
 set -e
-
-CMD="chronos run_jar"
+CMD="java ${JVM_OPTS} -jar /chronos/chronos.jar $@"
 
 # Parse environment variables (borrowed from https://github.com/mesoscloud/chronos)
 for k in `set | grep ^CHRONOS_ | cut -d= -f1`; do

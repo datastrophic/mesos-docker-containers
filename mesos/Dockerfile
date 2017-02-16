@@ -1,4 +1,12 @@
-FROM mesosphere/mesos:0.28.1-2.0.20.ubuntu1404
+FROM ubuntu:xenial
+
+ARG MESOS_VERSION=1.1.0-2.0.107.ubuntu1604
+
+RUN echo "deb http://repos.mesosphere.com/ubuntu xenial main" > /etc/apt/sources.list.d/mesosphere.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
+  apt-get -y update && \
+  apt-get -y install mesos=${MESOS_VERSION} && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV MESOS_WORK_DIR /tmp/mesos
 ENV MESOS_LOG_DIR /var/log/mesos

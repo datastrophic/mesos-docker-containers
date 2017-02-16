@@ -1,5 +1,3 @@
-FROM datastrophic/mesos:0.28.1
+FROM datastrophic/mesos:1.1.0
 
-CMD ["--registry=in_memory"]
-
-ENTRYPOINT ["mesos-master"]
+CMD ["mesos-master", "--registry=in_memory"]
