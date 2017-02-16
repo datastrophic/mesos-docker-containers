@@ -7,6 +7,10 @@ Chronos, Spark and Kafka binaries on top of them and run framework containers on
 
 All images use Ubuntu 16.04 by default, framework images derive from Mesos base with Oracle Java 8 installed, Mesos agent images 
 derive from Mesos base with Docker installed.
+
+## Running Spark on Mesos (bare metal installation)
+ 
+ 
  
 ## Running Mesos locally
 This setup is more for demonstration purposes and hits its limits when it comes to running docker containers via Marathon.
