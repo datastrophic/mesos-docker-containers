@@ -9,11 +9,37 @@ All images use Ubuntu 16.04 by default, framework images derive from Mesos base 
 derive from Mesos base with Docker installed.
 
 ## Running Spark on Mesos (bare metal installation)
- 
- 
+From any of Mesos agent nodes with Docker installed:
+
+spark-shell:
+
+      docker run -ti --net=host datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 \
+      spark-shell --master mesos://master.mesos:5050 --conf spark.mesos.executor.docker.image=datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0
+
+spark-submit:
+
+      docker run -ti --net=host datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 \
+      spark-submit --master mesos://master.mesos:5050 --conf spark.mesos.executor.docker.image=datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 \
+      --class org.apache.spark.examples.SparkPi /spark/examples/jars/spark-examples_2.11-2.1.0.jar 250
+
+Submitting Spark job to Chronos to be executed on a regular manner:
+
+      curl -L -H 'Content-Type: application/json' -X POST http://chronos.marathon.mesos:4400/v1/scheduler/iso8601 -d '{
+        "schedule": "R/2017-02-14T12:00:00.000Z/PT3M",
+        "name": "scheduled-spark-submit",
+        "container": {
+          "type": "DOCKER",
+          "image": "datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0",
+          "network": "HOST"
+        },
+        "cpus": "0.5",
+        "mem": "1024",
+        "fetch": [],
+        "command": "spark-submit --master mesos://master.mesos:5050 --conf spark.mesos.executor.docker.image=datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 --class org.apache.spark.examples.SparkPi /spark/examples/jars/spark-examples_2.11-2.1.0.jar 250"
+        }'
  
 ## Running Mesos locally
-This setup is more for demonstration purposes and hits its limits when it comes to running docker containers via Marathon.
+This setup is more for development and educational purposes and hits its limits when it comes to running docker containers via Marathon.
 
 ###docker-compose.yaml reference
 ```
