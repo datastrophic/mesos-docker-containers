@@ -1,110 +1,189 @@
 # Mesos Docker Containers
 
 ## Overview
-Set of Mesos-related docker containers inspired by Mesosphere images. 
+Set of Mesos-related docker containers built to address the latest updates of Mesos frameworks. Base Mesos images are used to install 
+Chronos, Spark and Kafka binaries on top of them and run framework containers on bare metal Mesos installations. For demonstration purposes
+ there's a docker-compose file provided to run cluster locally, however, limitations exist for local setup.
 
-All images use Ubuntu 16.04 by default, all Mesos Slave images and derivatives have Oracle Java 8 and Docker installed.
+All images use Ubuntu 16.04 by default, framework images derive from Mesos base with Oracle Java 8 installed, Mesos agent images 
+derive from Mesos base with Docker installed.
  
-## Running Mesos cluster locally
+## Running Mesos locally
+This setup is more for demonstration purposes and hits its limits when it comes to running docker containers via Marathon.
 
-###Environment setup
-It's possible to create a full Mesos environment on the local machine using docker-compose. 
+###docker-compose.yaml reference
+```
+version: '3'
+services:
 
-####Docker-machine
-Depending on one's needs virtual machine memory could be adjusted to different value, but memory should be gte 4GB. Steps to create new 
-docker-machine and launch docker images:  
+  zookeeper:
+    image: mesoscloud/zookeeper:3.4.6-ubuntu-14.04
+    hostname: "zookeeper"
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"
 
-      docker-machine create -d virtualbox --virtualbox-memory "8000" --virtualbox-cpu-count "4" mesos
-      eval "$(docker-machine env mesos)"
+  mesos-master:
+    image: datastrophic/mesos-master:1.1.0
+    hostname: "mesos-master"
+    container_name: master
+    privileged: true
+    environment:
+      - MESOS_HOSTNAME=mesos-master
+      - MESOS_CLUSTER=SMACK
+      - MESOS_QUORUM=1
+      - MESOS_ZK=zk://zookeeper:2181/mesos
+      - MESOS_LOG_DIR=/tmp/mesos/logs
+    links:
+      - zookeeper
+    ports:
+      - "5050:5050"
+
+  mesos-slave:
+    image: datastrophic/mesos-slave:1.1.0
+    hostname: "mesos-slave"
+    container_name: slave
+    privileged: true
+    environment:
+      - MESOS_HOSTNAME=mesos-slave
+      - MESOS_PORT=5151
+      - MESOS_MASTER=zk://zookeeper:2181/mesos
+    links:
+      - zookeeper
+      - mesos-master
+    ports:
+      - "5151:5151"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  marathon:
+    image: datastrophic/marathon:1.3.6
+    hostname: "marathon"
+    container_name: marathon
+    environment:
+      - MARATHON_HOSTNAME=marathon
+      - MARATHON_MASTER=zk://zookeeper:2181/mesos
+      - MARATHON_ZK=zk://zookeeper:2181/marathon
+    links:
+      - zookeeper
+      - mesos-master
+    ports:
+      - "8080:8080"
+
+  chronos:
+    image: datastrophic/chronos:mesos-1.1.0-chronos-3.0.1
+    hostname: "chronos"
+    container_name: chronos
+    environment:
+      - CHRONOS_HTTP_PORT=4400
+      - CHRONOS_MASTER=zk://zookeeper:2181/mesos
+      - CHRONOS_ZK_HOSTS=zookeeper:2181
+    links:
+      - zookeeper
+      - mesos-master
+    ports:
+      - "4400:4400"
+```
+
+###Environment
+Current steps are tested with Docker for Mac:
+
+      Docker version         1.13.1
+      docker-compose version 1.11.1
+      docker-py version      2.0.2
+
+Containers configuration is located in [docker-compose.yml](docker-compose.yml) in the root folder of this repo.
+
+To rebuild images please refer to [bin/build-all.sh](bin/build-all.sh) helper script
+
+###Running Mesos cluster
+To spin up a cluster with zookeeper, master, agent, marathon and chronos one instance each:
       
-      (!) Add address of `docker-machine ip mesos` to /etc/hosts with next hostnames: 
-      <ip address> 192.168.99.100 mesos-master mesos-slave zookeeper marathon chronos  
-
-      docker-compose up
+      docker-compose -p mesos up -d --force-recreate
       
+      (!) It might be useful to add alias for containers hostnames to /etc/hosts 
+      127.0.0.1 mesos-master mesos-slave zookeeper marathon chronos 
+      
+It is important to specify `-p mesos` flag (docker-compose project name) to ease the reference to default network created automatically.
+
 After this Mesos Master and Slave, Marathon and Chronos should be available:
 
 * Mesos Master [http://mesos-master:5050](http://mesos-master:5050)
 * Marathon [http://marathon:8080](http://marathon:8080)
 * Chronos [http://chronos:4400](http://chronos:4400)
 
-####Docker for mac
-Docker for Mac doesn't need above steps, but the configured memory should be tweaked to account for running given containers.
+Remove the containers with:
       
-###Using multiple slaves locally
-Multiple Mesos Slaves could be used in local setup, for this entries in `docker-compose.yml` should be duplicated with 
-appropriate port remapping to avoid conflicts. Example:
+      docker-compose -p mesos down && docker-compose -p mesos rm -f
+            
+###Using multiple agents locally
+Multiple Mesos agents could be used in local setup, for this entries in `docker-compose.yml` should be duplicated with 
+appropriate port remapping to avoid conflicts. Check out [docker-compose-bare-mesos.yml](docker-compose-bare-mesos.yml) 
+for the reference.
 
-      mesos-slave-1:
-        image: datastrophic/mesos-slave:1.1.0
-        hostname: "mesos-slave-1"
-        privileged: true
-        environment:
-          - MESOS_HOSTNAME=mesos-slave-1
-          - MESOS_PORT=5151
-          - MESOS_MASTER=zk://zookeeper:2181/mesos
-        links:
-          - zookeeper
-          - mesos-master
-        ports:
-          - "5151:5151"
-        volumes:
-          - /sys/fs/cgroup:/sys/fs/cgroup
-          - /var/run/docker.sock:/var/run/docker.sock
-          
-      mesos-slave-2:
-        image: datastrophic/mesos-slave:1.1.0
-        hostname: "mesos-slave-2"
-        privileged: true
-        environment:
-          - MESOS_HOSTNAME=mesos-slave-2
-          - MESOS_PORT=5252
-          - MESOS_MASTER=zk://zookeeper:2181/mesos
-        links:
-          - zookeeper
-          - mesos-master
-        ports:
-          - "5252:5252"
-        volumes:
-          - /sys/fs/cgroup:/sys/fs/cgroup
-          - /var/run/docker.sock:/var/run/docker.sock      
+###Docker in Docker
+Socket binding allows to run docker containers from within Mesos agents which have Docker installed:
       
-###Running Chronos via Marathon in local environment
-Instead of running Chronos as a separate Docker process it could be launched and managed with Marathon which will allow 
-to scale instance number and manage configuration with ease. To launch Chronos Marathon's REST API should be used. Because of 
-local environment specifics hostname resolution suffers when running docker-in-docker, so ip address in `CHRONOS_MASTER` 
-and `CHRONOS_ZK_HOSTS` should point to `docker-machine ip mesos`.
-       
-       curl -XPOST 'http://marathon:8080/v2/apps' -H 'Content-Type: application/json' -d '{
-         "id": "chronos",
-         "container": {
-           "type": "DOCKER",
-           "docker": {
-             "network": "BRIDGE",
-               "image": "datastrophic/chronos:mesos-1.1.0-chronos-3.0.1",
-               "parameters": [
-                    { "key": "env", "value": "CHRONOS_HTTP_PORT=4400" },
-                    { "key": "env", "value": "CHRONOS_MASTER=zk://'"$(docker-machine ip mesos)"':2181/mesos" },
-                    { "key": "env", "value": "CHRONOS_ZK_HOSTS='"$(docker-machine ip mesos)"':2181"}
-               ],
-               "portMappings": [
-                 { "containerPort": 4400 }
-               ]
-           }
-         },
-         "cpus": 1,
-         "mem": 512,
-         "instances": 1
-       }'
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        
+Here is an example of running dockerized Chronos inside Mesos Docker container:
 
-###Using Spark image
+- ensure current docker-compose stack is not running `docker-compose -p mesos top` and stop it if it is `docker-compose -p mesos down && docker-compose -p mesos rm -f`
+- run docker-compose with dedicated compose file containing zookeper, Mesos master and two agents with `docker-compose -f docker-compose-bare-mesos.yml -p mesos up -d --force-recreate`
+- attach to one of the running agents `docker exec -ti slave-1 /bin/bash`
+- run 
 
-There are some problems with running Spark docker image from within a dockerized Mesos, to run spark-shell on a physical cluster the next command will 
-be sufficient:
-    
-    docker run -ti --privileged datastrophic/mesos-spark spark-shell --master mesos://<mesos-master>:5050
+
+         docker run -ti \
+         --net=mesos_default -p 4400:4400 \
+         -e CHRONOS_HTTP_PORT=4400 \
+         -e CHRONOS_MASTER=zk://zookeeper:2181/mesos \
+         -e CHRONOS_ZK_HOSTS=zookeeper:2181 \
+         datastrophic/chronos:mesos-1.1.0-chronos-3.0.1
+
+- now Chronos UI should be available at [http://chronos:4400](http://chronos:4400) or [http://localhost:4400](http://localhost:4400) if you haven't modified `/etc/hosts`
+- shutdown the stack `docker-compose -p mesos -f docker-compose-bare-mesos.yml down && docker-compose -p mesos -f docker-compose-bare-mesos.yml rm -f`
+
+
+The approach used here is in specifying network `mesos_default` from parent containers so all the top-level containers could be reached and 
+their hostnames resolved. This network is created by default when docker-compose is executed for first time.
+
+###Limitations of local setup
+In production Mesos cluster the best practice is to run Chronos via Marathon to provide high availability guarantees. 
+This could be done by posting appropriate Marathon configuration for Chronos application:
+  
+      curl -XPOST 'http://marathon:8080/v2/apps' -H 'Content-Type: application/json' -d '{
+        "id": "chronos",
+        "container": {
+          "type": "DOCKER",
+          "docker": {
+              "network": "BRIDGE",
+              "privileged":true,
+              "image": "datastrophic/chronos:mesos-1.1.0-chronos-3.0.1",
+              "parameters": [
+                   { "key": "env", "value": "CHRONOS_HTTP_PORT=4400" },
+                   { "key": "env", "value": "CHRONOS_MASTER=zk://zookeeper:2181/mesos" },
+                   { "key": "env", "value": "CHRONOS_ZK_HOSTS=zookeeper:2181"}
+              ],
+              "portMappings": [
+                { "containerPort": 4400 }
+              ]
+          }
+        },
+        "cpus": 1,
+        "mem": 512,
+        "instances": 1
+      }'
+  
+However, this configuration will not work locally because Marathon doesn't support custom network types and with any other network type  
+Chronos container WILL NOT be able to reach zookeeper and bind Chronos to routable address. 
+
+Same limitations apply for Spark and Kafka Docker containers as well if they're executed from within Docker.
           
 ## Where to go from here
 
-* [TBD] Mesos Workshop usage examples and sample framework implementation
-* [TBD] Article describing Mesos architecture, core concepts and internals
+* [Mesos Workshop: usage examples and sample framework implementation](https://github.com/datastrophic/mesos-workshop)
+* [Resource Allocation in Mesos: Dominant Resource Fairness blog post](http://datastrophic.io/resource-allocation-in-mesos-dominant-resource-fairness-explained/)
