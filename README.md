@@ -37,7 +37,40 @@ Submitting Spark job to Chronos to be executed on a regular manner:
         "fetch": [],
         "command": "spark-submit --master mesos://master.mesos:5050 --conf spark.mesos.executor.docker.image=datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 --class org.apache.spark.examples.SparkPi /spark/examples/jars/spark-examples_2.11-2.1.0.jar 250"
         }'
- 
+
+## Running Chronos on Mesos
+From any of Mesos agent nodes with Docker installed:
+
+      docker run -ti \
+      --net=host -p 4400:4400 \
+      -e CHRONOS_HTTP_PORT=4400 \
+      -e CHRONOS_MASTER=zk://<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181/mesos \
+      -e CHRONOS_ZK_HOSTS=<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181 \
+      datastrophic/chronos:mesos-1.1.0-chronos-3.0.1
+
+Submitting to Marathon:
+
+      curl -XPOST 'http://marathon.mesos:8090/v2/apps' -H 'Content-Type: application/json' -d '{
+         "id": "chronos",
+         "container": {
+           "type": "DOCKER",
+           "docker": {
+             "network": "HOST",
+             "image": "datastrophic/chronos:mesos-1.1.0-chronos-3.0.1"
+           }
+         },
+         "env": {
+           "CHRONOS_HTTP_PORT":"4400",
+           "CHRONOS_MASTER":"zk://<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181/mesos",
+           "CHRONOS_ZK_HOSTS":"<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181"
+         },
+         "ports": [4400],
+         "cpus": 1,
+         "mem": 512,
+         "instances": 1,
+         "constraints": [["hostname", "UNIQUE"]]
+       }'
+
 ## Running Mesos locally
 This setup is more for development and educational purposes and hits its limits when it comes to running docker containers via Marathon.
 
