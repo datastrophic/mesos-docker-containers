@@ -6,10 +6,10 @@ RUN mkdir -p /spark-notebook && \
     curl -Ls -o /spark-notebook/${SPARK_NOTEBOOK_BINARY} https://s3.eu-central-1.amazonaws.com/spark-notebook/tgz/${SPARK_NOTEBOOK_BINARY}?max-keys=100000 && \
     tar -xzf /spark-notebook/${SPARK_NOTEBOOK_BINARY} -C /spark-notebook --strip-components 1
 
-#COPY clusters /spark-notebook/conf/clusters
-COPY entrypoint.sh /
-
 EXPOSE 9001
 
 WORKDIR /spark-notebook
-CMD ["/spark-notebook/bin/spark-notebook"]
+
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]

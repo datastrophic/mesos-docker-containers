@@ -17,4 +17,4 @@ RUN cd /chronos-build && curl -Lo cronos-${CHRONOS_VERSION}.tar.gz https://githu
 
 COPY entrypoint.sh /
 
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
