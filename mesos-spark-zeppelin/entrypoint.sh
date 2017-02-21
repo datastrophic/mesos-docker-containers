@@ -12,4 +12,4 @@ if [ $# -gt 0 ]; then
     exec "$@"
 fi
 
-exec "/spark-notebook/bin/spark-notebook"
+exec "/zeppelin/bin/zeppelin.sh"
