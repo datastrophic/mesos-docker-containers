@@ -6,7 +6,7 @@ RUN mkdir -p /zeppelin && \
     curl -Ls -o /zeppelin/${ZEPPELIN_BINARY} http://apache.mirrors.spacedump.net/zeppelin/zeppelin-0.7.0/${ZEPPELIN_BINARY} && \
     tar -xzf /zeppelin/${ZEPPELIN_BINARY} -C /zeppelin --strip-components 1
 
-EXPOSE 8080 4040
+EXPOSE 8080
 
 WORKDIR /zeppelin
 
