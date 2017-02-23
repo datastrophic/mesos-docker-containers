@@ -1,4 +1,4 @@
-FROM datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0
+FROM datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0-test
 
 ARG ZEPPELIN_BINARY="zeppelin-0.7.0-bin-netinst.tgz"
 
