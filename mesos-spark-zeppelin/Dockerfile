@@ -1,6 +1,6 @@
-FROM datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0-test
+FROM datastrophic/mesos-spark:mesos-1.1.0-spark-2.0.2
 
-ARG ZEPPELIN_BINARY="zeppelin-0.7.0-bin-netinst.tgz"
+ARG ZEPPELIN_BINARY=zeppelin-0.7.0-bin-netinst.tgz
 
 RUN mkdir -p /zeppelin && \
     curl -Ls -o /zeppelin/${ZEPPELIN_BINARY} http://apache.mirrors.spacedump.net/zeppelin/zeppelin-0.7.0/${ZEPPELIN_BINARY} && \

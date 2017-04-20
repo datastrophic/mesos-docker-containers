@@ -104,6 +104,34 @@ Submitting to Marathon (port should be adjusted to be in resource offers port ra
          "constraints": [["hostname", "UNIQUE"]]
        }'
 
+## Running Apache Drill in Marathon
+
+      curl -XPOST 'http://marathon.mesos:8090/v2/apps' -H 'Content-Type: application/json' -d '{
+         "id": "drill",
+         "container": {
+           "type": "DOCKER",
+           "docker": {
+             "network": "HOST",
+             "image": "datastrophic/apache-drill:drill-1.10"
+           }
+         },
+         "env": {
+           "DRILL_HEAP":"8G",
+           "DRILL_MAX_DIRECT_MEMORY":"12G",
+           "ZK_SERVERS":"phisical_zk_address:2181",
+           "CLUSTER_ID":"drillbeatz"
+           "AWS_ACCESS_KEY_ID":"{{ lookup('env','AWS_ACCESS_KEY_ID') }}",
+           "AWS_SECRET_ACCESS_KEY":"{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+         },
+         "8": 1,
+         "mem": 28000,
+         "instances": 10,
+         "constraints": [["hostname", "UNIQUE"]]
+       }'
+
+
+
+
 ## Running Mesos locally
 This setup is more for development and educational purposes and hits its limits when it comes to running docker containers via Marathon.
 
