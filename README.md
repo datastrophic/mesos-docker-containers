@@ -32,8 +32,8 @@ Submitting Spark job to Chronos to be executed on a regular manner:
           "image": "datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0",
           "network": "HOST"
         },
-        "cpus": "0.5",
-        "mem": "1024",
+        "cpus": "1",
+        "mem": "2048",
         "fetch": [],
         "command": "spark-submit --master mesos://master.mesos:5050 --conf spark.mesos.executor.docker.image=datastrophic/mesos-spark:mesos-1.1.0-spark-2.1.0 --class org.apache.spark.examples.SparkPi /spark/examples/jars/spark-examples_2.11-2.1.0.jar 250"
         }'
@@ -48,7 +48,7 @@ From any of Mesos agent nodes with Docker installed:
       -e CHRONOS_ZK_HOSTS=<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181 \
       datastrophic/chronos:mesos-1.1.0-chronos-3.0.1
 
-Submitting to Marathon:
+Submitting to Marathon (port should be adjusted to be in resource offers port range):
 
       curl -XPOST 'http://marathon.mesos:8090/v2/apps' -H 'Content-Type: application/json' -d '{
          "id": "chronos",
@@ -66,10 +66,71 @@ Submitting to Marathon:
          },
          "ports": [4400],
          "cpus": 1,
-         "mem": 512,
+         "mem": 2048,
          "instances": 1,
          "constraints": [["hostname", "UNIQUE"]]
        }'
+       
+## Running Zeppelin on Mesos
+From any of Mesos agent nodes with Docker installed (assuming S3 access is needed for a job):
+
+      docker run -ti \
+      --net=host -p 4400:4400 \
+      -e CHRONOS_HTTP_PORT=4400 \
+      -e CHRONOS_MASTER=zk://<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181/mesos \
+      -e CHRONOS_ZK_HOSTS=<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181 \
+      datastrophic/chronos:mesos-1.1.0-chronos-3.0.1
+
+Submitting to Marathon (port should be adjusted to be in resource offers port range):
+
+      curl -XPOST 'http://marathon.mesos:8090/v2/apps' -H 'Content-Type: application/json' -d '{
+         "id": "chronos",
+         "container": {
+           "type": "DOCKER",
+           "docker": {
+             "network": "HOST",
+             "image": "datastrophic/chronos:mesos-1.1.0-chronos-3.0.1"
+           }
+         },
+         "env": {
+           "CHRONOS_HTTP_PORT":"4400",
+           "CHRONOS_MASTER":"zk://<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181/mesos",
+           "CHRONOS_ZK_HOSTS":"<zookeeper_1>:2181,<zookeeper_2>:2181,<zookeeper_3>:2181"
+         },
+         "ports": [4400],
+         "cpus": 1,
+         "mem": 2048,
+         "instances": 1,
+         "constraints": [["hostname", "UNIQUE"]]
+       }'
+
+## Running Apache Drill in Marathon
+
+      curl -XPOST 'http://marathon.mesos:8090/v2/apps' -H 'Content-Type: application/json' -d '{
+         "id": "drill",
+         "container": {
+           "type": "DOCKER",
+           "docker": {
+             "network": "HOST",
+             "image": "datastrophic/apache-drill:drill-1.10"
+           }
+         },
+         "env": {
+           "DRILL_HEAP":"8G",
+           "DRILL_MAX_DIRECT_MEMORY":"12G",
+           "ZK_SERVERS":"phisical_zk_address:2181",
+           "CLUSTER_ID":"drillbeatz"
+           "AWS_ACCESS_KEY_ID":"{{ lookup('env','AWS_ACCESS_KEY_ID') }}",
+           "AWS_SECRET_ACCESS_KEY":"{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+         },
+         "8": 1,
+         "mem": 28000,
+         "instances": 10,
+         "constraints": [["hostname", "UNIQUE"]]
+       }'
+
+
+
 
 ## Running Mesos locally
 This setup is more for development and educational purposes and hits its limits when it comes to running docker containers via Marathon.

@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y curl && \
 ENV SPARK_HOME /spark
 ENV PATH=$PATH:$SPARK_HOME/bin
 
-COPY spark-defaults.conf /spark/conf
+COPY spark-defaults.conf ${SPARK_HOME}/conf
+COPY bootstrap.sh ${SPARK_HOME}
 COPY entrypoint.sh /
 
 EXPOSE 4040
